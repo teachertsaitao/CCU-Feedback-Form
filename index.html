@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CCU 課堂評估回饋調查</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cs: #D6E4F0; --im: #E2EFDA; --bm: #FCE4D6; --cc: #E4DFEC;
+  --text: #2c3e50; --subtle: #666; --border: #ddd;
+  --green: #27ae60; --blue: #2980b9; --dark: #34495e;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Noto Sans TC', -apple-system, sans-serif;
+  color: var(--text); background: #f5f6f8;
+  line-height: 1.6; -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 700px; margin: 0 auto; padding: 20px 16px 60px; }
+h1.main-title { font-size: 22px; font-weight: 800; text-align: center; letter-spacing: 1px; margin-bottom: 2px; }
+.sub-title { font-size: 12px; color: #999; text-align: center; margin-bottom: 20px; }
+
+.tabs { display: flex; gap: 4px; margin-bottom: 14px; }
+.tab {
+  flex: 1; text-align: center; padding: 7px 2px; border-radius: 6px;
+  font-size: 11px; font-weight: 600; background: #e8e8e8; color: #999;
+  cursor: default; transition: all .2s; user-select: none;
+}
+.tab.active { color: var(--text); font-weight: 700; }
+.tab.done { cursor: pointer; }
+.tab.done:hover { filter: brightness(0.95); }
+
+.progress-track { background: #e0e0e0; border-radius: 10px; height: 6px; margin-bottom: 20px; }
+.progress-fill { height: 100%; border-radius: 10px; transition: width .35s; background: linear-gradient(90deg, var(--green), #2ecc71); }
+
+.page { display: none; }
+.page.active { display: block; animation: fadeIn .25s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+.field { margin-bottom: 14px; }
+.field label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.field label .req { color: #e74c3c; }
+.field input[type=text], .field input[type=email] {
+  width: 100%; padding: 8px 10px; border: 1.5px solid var(--border);
+  border-radius: 6px; font-size: 14px; outline: none; transition: border-color .2s; font-family: inherit;
+}
+.field input:focus { border-color: var(--blue); }
+.field input.err { border-color: #e74c3c; }
+.field .err-msg { color: #e74c3c; font-size: 12px; margin-top: 2px; display: none; }
+.field input.err + .err-msg { display: block; }
+
+.domain-hdr { padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid rgba(0,0,0,.12); }
+.domain-hdr h2 { font-size: 17px; font-weight: 700; }
+
+.sub-card { margin-bottom: 24px; padding: 16px; border: 1px solid #e0e0e0; border-radius: 8px; background: #fafafa; }
+.sub-card h3 { font-size: 15px; font-weight: 700; color: var(--dark); margin-bottom: 2px; }
+.sub-card .en { font-size: 12px; color: #999; margin-bottom: 14px; }
+
+.question { margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px dashed #ddd; }
+.question:last-of-type { border-bottom: none; }
+.q-title { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+.q-title.missing { color: #e74c3c; }
+
+.option {
+  display: flex; align-items: flex-start; gap: 8px; padding: 6px 10px;
+  margin-bottom: 4px; border-radius: 6px; cursor: pointer;
+  font-size: 13px; line-height: 1.5; border: 1px solid transparent; transition: all .15s;
+}
+.option:hover { background: rgba(0,0,0,.03); }
+.option.selected { border-color: #bbb; }
+.option input[type=radio] { margin-top: 3px; accent-color: var(--dark); flex-shrink: 0; }
+
+.notes-area {
+  width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px;
+  font-size: 13px; margin-top: 4px; resize: vertical; font-family: inherit; min-height: 40px;
+}
+
+.btn-row { display: flex; justify-content: space-between; margin-top: 20px; gap: 10px; flex-wrap: wrap; }
+.btn {
+  padding: 10px 22px; color: #fff; border: none; border-radius: 6px;
+  font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; transition: filter .15s;
+}
+.btn:hover { filter: brightness(0.9); }
+.btn:disabled { opacity: 0.6; cursor: wait; }
+.btn-dark { background: var(--dark); }
+.btn-gray { background: #7f8c8d; }
+.btn-green { background: var(--green); }
+
+.result-group { margin-bottom: 24px; padding: 16px; border-radius: 8px; border: 1px solid transparent; }
+.result-group h3 { font-size: 15px; font-weight: 700; margin-bottom: 12px; }
+
+.band-row { margin-bottom: 14px; }
+.band-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 3px; }
+.band-label .name { font-weight: 600; }
+.band-label .score { font-weight: 700; }
+.band-track { display: flex; height: 22px; border-radius: 4px; overflow: hidden; position: relative; border: 1px solid #ccc; }
+.band-seg { height: 100%; }
+.band-marker {
+  position: absolute; top: -2px; bottom: -2px; width: 3px;
+  background: #222; border-radius: 2px; transform: translateX(-1.5px);
+  box-shadow: 0 0 4px rgba(0,0,0,.4);
+}
+.band-arrow { position: absolute; top: -9px; font-size: 10px; font-weight: 700; transform: translateX(-5px); color: #222; }
+
+.submit-box { margin-top: 24px; padding: 20px; border-radius: 8px; border: 1px solid #ddd; background: #f8f9fa; }
+.submit-box.success { background: #d5f5e3; border-color: #27ae60; }
+.submit-error { font-size: 13px; color: #e74c3c; margin-bottom: 10px; padding: 8px 12px; background: #fde8e8; border-radius: 4px; }
+
+@media print { .btn-row, .tabs, .progress-track, .submit-box { display: none; } .page { display: block !important; } }
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <h1 class="main-title">CCU 課堂評估回饋調查</h1>
+  <p class="sub-title">Classroom Check-Up Feedback Survey</p>
+  <div class="tabs" id="tabs"></div>
+  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  <div id="pages"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════════════════════════════
+var GAS_URL = "https://script.google.com/macros/s/AKfycbxox3Lpw2kU1xCaxOv-Vdr8lu3pmtUGCf_qIRhYe75sF8XP1SIDwIkfvl-tgyJx-PTubg/exec";
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════════════════════════
+var DOMAINS = [
+  {
+    id:"CS", name:"教室結構", en:"Classroom Structure", color:"#D6E4F0", icon:"◀",
+    subs:[
+      { id:"CS_PL", name:"物理佈局", en:"Physical Layout", qs:[
+        {t:"動線與雜物：",o:["動線不清晰，雜物過多且擁擠。","動線未能提供取得所需材料或設備的最佳路徑。房間雜亂擁擠。","動線並非獲取所需材料或設備的最佳路線。房間有些雜物，但並不擁擠。","動線清晰，但存在一些障礙物，阻礙了對某些物品或房間區域的取用。雜物極少，沒有擁擠。","動線清晰，但存在一些障礙物，阻礙了對某些物品或房間區域的取用。沒有雜物堆積或擁擠。","動線清晰明確，人員通行順暢，互不干擾。沒有雜物或擁擠現象。"]},
+        {t:"教師可進入教室所有區域：",o:["教師無法進入教室的所有區域。","由於難以進入所需的多個區域，教師無法主動監督學生。","由於教室裡有障礙物阻礙行動，老師要穿過這些障礙物才能到達學生身邊，但這有些困難。","教師可以進入教室的大部分區域，但可以移除一些障礙物。","教師可以進入教室的所有區域。"]},
+        {t:"教師檢視學生的能力：",o:["房間的佈置使得一些學生始終處於隱藏狀態，在某些區域無法被看到。","房間的佈置使得學生可以待在老師看不到的幾個區域。","房間的佈置使得學生可以在房間的某個區域以老師看不到的方式（例如，坐在書架後面）進行學習。","從某些角度來看，有些學生總是很難看清楚。","學生們可以隨時從各個角度被看見。"]},
+        {t:"材料整理：",o:["材料沒有清晰的組織結構。","材料標籤的使用非常少。","有些材料經過整理並貼有標籤，但學生不容易取用。","部分材料已整理並貼上標籤，方便學生取用。","大多數課堂材料都貼有標籤、整理有序，方便取用。","課堂教材都貼有標籤、擺放整齊，方便所有學生取用。"]},
+      ]},
+      { id:"CS_CR", name:"課堂規則", en:"Classroom Rules", qs:[
+        {t:"規則數量：",o:["課堂上沒有規則。","教室裡有五條以上的規則。","教室裡只有五條或更少的規則。"]},
+        {t:"規則品質：",o:["課堂上沒有規則。","規則只是規定了不應該做什麼。","有些規則沒有以正向方式表述（即告訴學生該做什麼），也不夠具體或可觀察。","有些規則並非以正向方式表達，但具體且可觀察。","大多數規則都很具體、可觀察，並以正向方式表達。","所有規則都具體明確、可觀察，並以正向方式表達。"]},
+        {t:"規則的可視化發布：",o:["沒有公佈任何規則。","規則雖然張貼出來了，但學生或訪客不容易注意到。","教室裡醒目位置張貼著規則，方便所有學生查看。然而，這是一間幼兒園到二年級的教室，缺乏用圖片等視覺方式解釋每條規則的具體內容。","教室規則會醒目地張貼在教室的顯眼位置，方便所有學生查看。此外，如果是幼稚園到二年級的教室，也會使用圖片輔助文字規則，幫助低年級學生理解。"]},
+        {t:"規則執行的一致性：",o:["學生似乎不了解課堂規則或行為期待。","行為期待只存在一部分，而這些期待的應用方式難以預測。","與規則相對應的行為期待是存在的，但應用上卻不一致。","與規則相對應的行為期待是存在的，但有些規則的應用並不一致。","與規則相對應的行為期待是存在的，並且始終如一地應用。"]},
+      ]},
+      { id:"CS_RT", name:"課堂常規", en:"Classroom Routines", qs:[
+        {t:"課堂常規活動的可視化展示：",o:["課堂常規沒有行為期待（例如，如何以及何時削鉛筆）。","常規的行為期待沒有張貼出來。","常規的行為期待已張貼，但張貼在學生看不到的地方。","行為期待已明確張貼，但不符合兒童的發展階段（例如，可能需要結合圖片和文字說明）。","雖然常規的行為期待已明確張貼，但有些並不適合兒童的發展階段。","常規的行為期待已明確張貼，且符合兒童發展階段。"]},
+        {t:"對課堂常規的期望品質：",o:["課堂常規沒有行為期待。","所有關於常規的行為期待都很模糊，或沒有以正向方式表述（即，告訴學生該做什麼，而不是不該做什麼）。","大多數關於常規的行為期待都比較模糊，或沒有以正向方式表達。","有些常規的行為期待不夠清晰，或表達不夠正向。","大多數對常規的期待都是具體的、正向的、可觀察的。","對常規的所有期待都是具體的、正向的、可觀察的。"]},
+        {t:"課堂常規執行的一致性：",o:["課堂常規沒有行為期待。","只有少數學生能夠展現或清楚地了解一天中的日常常規（例如，早晨的作息、一天結束的作息、午餐後返回）。","有些學生能展現並清楚地了解一天中的各種日常常規。","大部分學生都能展現出對日常作息規律的清晰認知。","所有學生都能展現出對日常作息規律的清晰認知與理解。"]},
+      ]},
+      { id:"CS_ST", name:"活動轉換平順", en:"Smooth Transitions", qs:[
+        {t:"活動轉換提示：",o:["活動轉換總是在沒有明確提示的情況下發生。","有些活動轉換是由老師提示的，但並非所有活動轉換都是如此。","大多數活動轉換環節都是由老師提示的。","所有活動轉換都由老師提示。"]},
+        {t:"使用事前提醒：",o:["活動轉換開始前沒有提供任何事前提醒，學生常常顯得困惑。","活動轉換開始前沒有提供任何事前提醒，但由於學生感到困惑，老師在活動轉換期間解釋了應該做什麼。","對於某些活動轉換，會提供一份事前提醒，在活動轉換開始之前明確行為期待。","對於大多數活動轉換，都會提供一份事前提醒，在活動轉換開始之前明確行為期待。","在活動轉換開始之前，總會提供一份事前提醒，明確行為期待。"]},
+        {t:"使用注意力信號：",o:["沒有提供任何注意力信號。相反，老師在導正學生行為或試圖告訴學生他們需要做什麼時，可能會大聲說話或對著學生大喊大叫。","雖然使用了注意力信號，但只有不到 50% 的學生做出反應。","使用注意力信號後，約有 75% 的學生做出反應。","使用注意力信號後，超過 85% 的學生做出了回應。"]},
+        {t:"活動轉換期間的中斷數：",o:["在活動轉換時期，需要花費大量時間來導正破壞性行為。","在活動轉換時期，需要花一些時間來導正破壞性行為。","幾乎沒有出現擾亂課堂秩序的行為，學生也清楚地了解活動轉換期間的行為期待。"]},
+        {t:"在活動轉換時期運用常規：",o:["觀察到的活動轉換沒有明確的常規。效率非常低。","活動轉換期間所採用的常規效率不高。","常規所需時間比理想情況稍長。","活動轉換期間所採用的常規非常省時。"]},
+        {t:"學生對活動轉換階段的期待是否清晰：",o:["學生不清楚活動轉換期的期待。","絕大多數學生不清楚活動轉換期的期待。","大約一半的學生不清楚活動轉換期的期待。","大多數學生都清楚活動轉換期的期待。","所有學生都清楚活動轉換期間的期待。"]},
+        {t:"運用讚美和正向關注：",o:["學生在活動轉換期間得不到任何讚美或正向的關注。","當學生在活動轉換時，很少及時給予讚美或正向的關注（即，當該行為正在發生時）。","對於一些能夠及時完成活動轉換的學生，我們會給予讚美或正向的關注，但也會錯過一些機會。","對於順利完成活動轉換的學生，我們會持續給予讚美和正向的關注。"]},
+        {t:"整體活動轉換品質：",o:["活動轉換環節會干擾教學，導致學生無法進入學習狀態。","活動轉換時間過長，很少學生開始學習。","活動轉換過程並不順利，但最終大多數學生都能開始學習。","整體而言，活動轉換可以更加流暢高效一些。","整體而言，活動轉換流暢且有效率。"]},
+      ]},
+    ]
+  },
+  {
+    id:"IM", name:"教學管理", en:"Instruction Management", color:"#E2EFDA", icon:"■",
+    subs:[
+      { id:"IM_SP", name:"日程安排已發布並遵守", en:"Schedule Posted and Followed", qs:[
+        {t:"日程已公佈：",o:["每日日程表未公佈。","每日日程表已張貼，但很難找到。","每日日程表張貼在教室的某個區域，方便查看。","每日日程表張貼在學生和訪客容易看到的地方。"]},
+        {t:"日程安排清晰且符合兒童發展階段：",o:["學生似乎不了解課程安排。","公佈的日程表大部分內容不夠清晰，也不符合兒童的發展階段。","公佈的日程安排中有些部分不夠清晰或不符合兒童發展階段。","公佈的日程安排中有一部分或兩部分不夠清晰或不符合兒童發展階段。","公佈的日程表清晰明了，符合兒童發展階段（例如，為年幼兒童提供圖片和文字說明）。"]},
+        {t:"教師按計畫行事：",o:["學生常常會問老師接下來會發生什麼事。","日程安排執行並不穩定。","老師基本上是按照每日作息時間表進行教學，但也有一些變化。","老師依照每日行程安排授課。"]},
+        {t:"日程變更：",o:["學生不會被告知課程安排的變更。","當課程安排發生變化時，老師會在變化即將發生前通知學生。","當課程安排發生變化時，老師會提前通知學生（例如，在前一堂課）。","當課程安排發生變化時，老師會在當天開始時或提前通知學生。"]},
+        {t:"分配的教學時間：",o:["目前尚不清楚一天中有多少時間安排用於教學活動。","課程安排中，用於教學活動的時間不到一天的50%。","課程安排中，每天約有 50% 的時間用於教學活動。","課程安排中，每天有 50% 到 69% 的時間用於教學活動。","課程安排中，每天約有 70% 的時間用於教學活動。","課程安排中，每天約有 80% 的時間用於教學活動。"]},
+      ]},
+      { id:"IM_AO", name:"學業目標", en:"Academic Objectives", qs:[
+        {t:"吸引學生注意：",o:["課程開始時，只有不到 50% 的學生能集中注意力。","課程開始時，50% 的學生會集中注意力。","65% 的學生在課程開始時就能集中注意力。","75% 的學生在課程開始時就能集中注意力。","85%的學生在課程開始時就能集中注意力。","課程開始時，100% 的學生都能集中注意力。"]},
+        {t:"學業期望說明：",o:["沒有提供任務說明。","任務的解釋有限或含糊不清。","任務說明有些不清楚，需要進一步解釋。","在佈置學術任務之前，會提供任務說明，但有些資訊並不清楚。","在學術任務開始之前，會給予非常明確的要求，無需任何解釋。"]},
+        {t:"學生對任務的理解：",o:["絕大多數學生對作業要求不清楚。他們似乎很困惑，提出了很多疑問。","大多數學生對作業要求不清楚。許多學生會向老師提問或詢問同學該怎麼做。","很多學生對作業要求不清楚。老師會花時間與小組學生一起解答問題，之後這些學生才能繼續下一步。","有些學生對作業要求不清楚，提出了一些疑問。","大多數學生都清楚作業要求，只有少數學生提出了疑問。","學生對作業要求很清楚，很少提出疑問。"]},
+        {t:"學生參與任務的程度：",o:["大多數學生因缺乏興趣而對作業漠不關心。","有些學生因為缺乏興趣而對作業失去興趣。","有些學生似乎不太投入這項任務，因為他們不明白該怎麼做。","少數學生似乎對這項任務參與度不高，因為他們不明白該怎麼做。","大多數學生都積極參與學習任務。","所有學生都積極投入學習任務。"]},
+      ]},
+      { id:"IM_PA", name:"教學節奏", en:"Pacing of Instruction", qs:[
+        {t:"利用各種機會回應（例如，學生提出的與學術內容相關的問題）：",o:["沒有提供任何回應的機會。教學完全是講授式的，沒有提出任何問題來評估學生是否理解。","平均每分鐘學生只有不到 1 次回應機會。","平均每分鐘給學生約 1 次回應機會。","每分鐘提供給學生約 2 次回應機會。","每分鐘提供給學生約 3 次回應機會。","每分鐘至少給學生三次回應機會。"]},
+        {t:"回應機會類型：",o:["沒有提供任何回應的機會。教學完全是講授式的，沒有提出任何問題來評估學生是否理解。","只有舉手的學生或先前被點名的學生才有機會回答問題。","只有那些積極回應的學生才有機會做出回應。","同時提供了針對小組和個別學生的提問。","同時提供了針對小組和個別學生的提問。此外，也隨機抽取學生作答。"]},
+        {t:"課前準備：",o:["課堂內容不斷被擾亂課堂秩序的行為或需要複習教材的情況所打斷。","課堂上經常出現擾亂課堂秩序的行為，或是需要複習教材，這些情況都會打斷課程。","課程有時會因學生擾亂課堂秩序或需要複習教材而中斷。","雖然在繼續授課之前需要複習一些材料，但總體而言，授課過程相當流暢。","課程準備充分，講解流暢。"]},
+      ]},
+      { id:"IM_SA", name:"學業正確性", en:"Student Accuracy", qs:[
+        {t:"學生對學術問題的回答：",o:["教學過程中未提供任何回應機會以評估學生的知識水平；或者，當有機會做出回應時，學生對新教材的正確回答率為50%，對複習教材的正確回答率為 65%。","當有機會回答時，學生對於新教材的正確回答率為 60%，對於複習教材的正確回答率為 70%。","當有機會回答時，學生對於新教材的正確回答率為 65%，對於複習教材的正確回答率為 75%。","當有機會回答時，學生對於新教材的正確回答率為 70%，對於複習教材的正確回答率為 80%。","當有機會回答時，學生對於新教材的正確回答率為 75%，對於複習教材的正確回答率為 85%。","當有機會回答時，學生對於新教材的正確率達到 80%，對於複習教材的正確率達到 90%。"]},
+        {t:"教學難度等級：",o:["絕大多數學生似乎都心不在焉或分心，因為課程太難或太容易了。","多數學生似乎都心不在焉或分心，因為課程太難或太容易了。","有些教材對學生來說要不是太簡單，就是太難。有些學生感到挑戰，並維持學習投入；而有些學生則變得不投入。","大部分教材對學生來說難度適中，既不太容易也不太難。大多數學生都感到具有挑戰性，並且保持了較高的參與度。","對學生來說，教材難度適中，既不太容易也不太難。學生雖然面臨挑戰，但始終保持投入。"]},
+        {t:"運用糾正性學術回饋：",o:["儘管學生給出了錯誤的學業回答，但沒有提供任何糾正性回饋。","只提供了「不」或「錯誤」之類的糾正性回饋，而沒有告訴、展示或演示正確答案。","有時，糾正性回饋包括告知、展示或演示正確答案。","糾正性回饋總是包括告知、展示或演示正確答案。"]},
+      ]},
+      { id:"IM_SE", name:"學生參與度", en:"Student Engagement", qs:[
+        {t:"學生參與度百分比：",o:["課堂上，只有不到 60% 的學生積極參與。","大約 60% 的學生在課堂上積極參與。","大約70%的學生在課堂上積極參與。","約85%的學生在課堂上積極參與。","大約90%的學生在課堂上積極參與。","95%或以上的學生在課堂上積極參與。"]},
+        {t:"學生興趣程度：",o:["絕大多數學生感到無聊或不感興趣。","許多學生感到無聊或不感興趣。","雖然學生們都在完成老師佈置的任務，但許多學生似乎感到無聊或不感興趣。","多數學生都很投入，但也有一些學生似乎對課程不感興趣。","大多數學生似乎對課程內容很感興趣。","絕大多數學生似乎對課程內容很感興趣。"]},
+        {t:"分心行為：",o:["大部分學生都沒有認真聽講。","出現了許多分心或擾亂秩序的行為。","很多學生分心，但不一定會擾亂課堂秩序。","有些學生分心。","很少學生分心。","沒有學生分心。"]},
+      ]},
+    ]
+  },
+  {
+    id:"BM", name:"行為管理", en:"Behavior Management", color:"#FCE4D6", icon:"●",
+    subs:[
+      { id:"BM_BE", name:"行為期待", en:"Behavioral Expectations", qs:[
+        {t:"行為期待清晰明確：",o:["似乎沒有明確的期待。","大多數旁觀者可能不清楚學生在課堂上該做什麼。","旁觀者可能難以弄清楚學生在課堂上應該做什麼。","大多數旁觀者都能輕鬆理解課堂要求。","旁觀者很容易理解課堂要求。"]},
+        {t:"學生對行為規範的理解：",o:["不到50%的學生清楚了解課堂行為規範。","約有50%的學生清楚地理解課堂行為規範。","約65%的學生清楚理解課堂行為規範。","約75%的學生清楚了解課堂行為規範。","約80%的學生清楚了解課堂行為規範。","90%或以上的學生清楚地理解課堂行為規範。"]},
+        {t:"強化行為期待：",o:["課堂行為適當的學生得不到任何關注或讚美。","對於課堂行為適當的學生，老師很少給予關注或讚美。","對學生給予正向關注，但這種關注並沒有策略性地幫助學生理解行為規範。","對於課堂行為適當的學生，老師會定期給予關注或讚美。","課堂行為適當的學生會持續得到正向強化。"]},
+        {t:"行為期待回顧：",o:["儘管需要花費大量教學時間來導正學生的行為，但行為規範卻沒有被重新檢視。","當許多學生在小組或個別輔導中遇到困難時，老師不會複習行為規範，而是透過訓斥來導正他們的行為。","當超過一半的學生學習遇到困難時，就要重新檢視行為規範。","行為規範會根據需要進行審查，遵守規範的學生會受到肯定。","行為規範會定期或根據需要進行回顧，遵守規範的學生會受到肯定。此外，教師會在與學生的日常互動中積極示範行為規範。"]},
+      ]},
+      { id:"BM_AS", name:"主動監督", en:"Active Supervision", qs:[
+        {t:"在教室裡走動和環顧四周：",o:["既不進行巡視，也不在教室裡走動觀察學生，而且/或學生長時間無人照看（例如，查看電子郵件、打電話或與另一位成年人交談、離開教室）。","很少會掃視或在教室裡走動來觀察學生，即使有學生明顯需要指導或幫助，老師也會站在離學生相當遠的地方（例如，課桌旁）。","老師會定期掃視教室，以確定學生是否需要協助，但不會走動到學生身邊。","主動監督是指在教室裡積極走動，用眼睛和耳朵掃視，但不與學生互動。","主動監督是指在教室裡積極走動，用眼睛和耳朵觀察，並與學生互動。"]},
+        {t:"利用鄰近性：",o:["所有擾亂秩序或不參與課堂的行為都會被忽略。","大多數擾亂秩序或不投入的行為都會被忽略。","擾亂課堂秩序的行為會被遠距離導正，老師會隔著教室訓斥學生。","大多數學生都專注於任務，當出現擾亂課堂秩序的行為時，老師會走近這些學生。","老師會運用靠近策略來預防問題行為（在問題發生之前注意到學生並靠近他）。"]},
+        {t:"為學生提供支援：",o:["需要幫助的學生往往長期被忽視。","需要幫助的學生可能會被要求在等待一段時間後去找老師。","只有主動來找老師的學生才能得到幫助。","有些學生能得到必要的幫助，但有些學生卻被忽略了。","需要幫助的學生可以隨時獲得關注，而無需去找老師。"]},
+      ]},
+      { id:"BM_UP", name:"讚美的使用", en:"Use of Praise", qs:[
+        {t:"讚美的品質：",o:["不使用讚美或正向關注來鼓勵學生的行為。","只採用一般性讚美來鼓勵學生的行為。","使用的一般性讚美多於針對具體行為的讚美。","一般性讚美與針對具體行為的讚美比例相近（1:1），以鼓勵學生的行為。","針對具體行為的讚美比一般性讚美的比例更高（2:1 或更高），以鼓勵學生的行為。"]},
+        {t:"讚美的條件性：",o:["不使用讚美或正向關注來鼓勵學生的行為。","當使用讚美時，似乎與學生的行為無關（例如，只是出於習慣說\"好\"，而沒有目標）。","有些讚美是有條件的，需要符合預期的行為。","讚美大多取決於預期行為。","讚美總是與預期行為連結的。"]},
+        {t:"讚美的適切性：",o:["不使用讚美或正向關注來鼓勵學生的行為。","大多數讚美與行為無關（例如誇聰明、穿著），或僅針對瑣碎的行為。","讚美與行為有關，但這些行為大多是微不足道的。","有時，一些微不足道的行為也會被讚美。","大多數的讚美都針對重要、具有社會意義的行為。","絕大多數的讚美都針對重要、具有社會意義的行為。"]},
+        {t:"讚美的真誠性：",o:["不使用讚美或正向關注來鼓勵學生的行為。","當觀察到讚美時，常伴隨著負面的評價，或是讚美的方式並不真誠。","有時，讚美似乎並不真誠。","絕大多數讚美都是真誠的。"]},
+      ]},
+      { id:"BM_UR", name:"訓誡的使用", en:"Use of Reprimands", qs:[
+        {t:"訓誡的品質：",o:["訓誡與學生行為無關。","訓誡往往含糊不清，沒有告訴學生該怎麼做。","訓誡雖然明確，但並不總是告訴學生應該怎麼做。","訓誡措辭明確，總是會告知學生該如何改正。"]},
+        {t:"訓誡的流暢性：",o:["訓誡與學生行為無關。","有些訓誡會持續超過30秒。","有些訓誡持續超過20秒，而且語調並不平靜。","大多數訓誡可以更簡短，可能帶有情緒化的語氣，但不會過於嚴厲。","有些訓誡簡短、一致且語氣溫和。然而，有些訓誡卻過長。","絕大多數訓誡都簡短、一致且語氣平靜。"]},
+        {t:"訓誡方式的適齡性：",o:["絕大多數訓誡並不總是符合孩子的發展階段。","有些訓誡方式並不總是適合孩子的發展階段。","多數訓誡都符合孩子的發展階段。","絕大多數訓誡都符合孩子的發展階段。"]},
+        {t:"訓誡的語氣：",o:["一次或多次訓誡以嚴厲、不尊重或貶低的方式進行；或大多數訓誡都帶有諷刺意味。","有些訓誡中會包含諷刺。","對學生的訓誡絕不會嚴厲、諷刺、不尊重或貶低。"]},
+      ]},
+      { id:"BM_PN", name:"正負回饋比", en:"Positive to Negative Ratio", qs:[
+        {t:"讚美與訓誡的比例：",o:["教師沒有給予任何讚美，或每給予一次讚美，就給予 4 次或更多次訓誡（1:4+）。","每讚美一次，就給予三次訓誡（1:3）。","每讚美一次，就給予兩次訓誡（1:2）。","每讚美一次，就給予一次訓誡（1:1）。","每次訓誡都對應兩次讚美（2:1）。","每次訓誡都對應三次讚美（3:1）。"]},
+      ]},
+      { id:"BM_RF", name:"增強物的使用", en:"Use of Reinforcement", qs:[
+        {t:"增強方式的多元性：",o:["未使用任何形式的正向增強，包括口頭表揚。","僅採用一種方式來認可和獎勵學生理想的學術和社交行為。","採用兩種方式來認可和獎勵學生理想的學術和社交行為（例如，小的實物獎勵、喜歡的活動、口頭表揚、積分以獲得更大的獎勵等）。","採用 3 種或以上方式表揚和獎勵學生的良好學業和社交行為。"]},
+        {t:"增強的條件性：",o:["未使用任何形式的正向增強，包括口頭表揚。","增強很少與行為連結。","增強主要取決於行為，但使用並不一致。","增強主要取決於行為，且具有一致性。","增強總是與行為連結，並且始終如一地使用。"]},
+        {t:"使用增強物：",o:["雖然和學生討論過獎勵或增強物，但從未提供過，或不清楚如何獲得獎勵。","承諾給予獎勵或增強物，但並未兌現，或作為懲罰而被剝奪。","獎勵或增強物有時會被承諾，但不會兌現，或不會及時兌現（即，在預期行為發生後不久）。","及時運用並給予團體或個人增強/獎勵。","團體和個人增強/獎勵均及時運用和實施。"]},
+        {t:"增強系統的整體品質：",o:["目前沒有針對個別學生或全班的適當行為進行獎勵的制度。","已建立獎勵適當行為的制度，但該制度使用不一致，或者學生似乎不了解該制度。","已建立一套系統，利用各種增強手段來獎勵個別學生或全班學生的適當行為，學生也了解這套系統。"]},
+      ]},
+    ]
+  },
+  {
+    id:"CC", name:"課堂氛圍", en:"Classroom Climate", color:"#E4DFEC", icon:"◆",
+    subs:[
+      { id:"CC_NA", name:"無條件關注的運用", en:"Use of Noncontingent Attention", qs:[
+        {t:"無條件關注的頻率（即，與預期行為無關的對學生的關注）：",o:["不對學生使用無條件關注。","大約 25% 的學生會在門口受到老師的迎接，但這種迎接並不常態，或者老師和學生之間會有一些個別的談話。","大約 50% 的學生會在門口受到老師的迎接，但這種迎接並沒有系統化，或者老師和學生之間會發生一些個別對話。","大多數學生在門口都會受到老師的迎接，並與老師進行單獨對話。","所有學生在門口都會受到老師的迎接，並與老師進行單獨談話。"]},
+        {t:"增強的條件性：",o:["未使用任何形式的正向增強，包括口頭表揚。","增強很少與行為連結。","增強主要取決於行為，但使用並不一致。","增強主要取決於行為，且具有一致性。","增強總是與行為連結，並且始終如一地使用。"]},
+        {t:"教師對學生的了解程度：",o:["這位老師對學生的喜好一無所知。","這位老師對一、兩個學生的喜好和厭惡有著真正的了解。","這位老師真正了解一部分學生的喜好。","這位老師對大多數學生的喜好和厭惡有著真正的了解。","這位老師真正了解絕大多數學生的喜好，並將學生的喜好融入日常教學中。"]},
+        {t:"學生作品展示：",o:["教室裡沒有任何展示，也沒有對學生作品的公開表彰。","課堂上展示的學生作品都以成績為導向。","教室展示學生作品，不強調作品品質（即，不只是展示獲得高分的學生的作品）。"]},
+      ]},
+      { id:"CC_IS", name:"與學生互動", en:"Interactions with Students", qs:[
+        {t:"激烈互動次數：",o:["觀察到兩次或兩次以上嚴厲且批評性的互動。","觀察到一次與學生的嚴厲或批評性互動。","未觀察到與學生之間有任何嚴厲或批評性的互動。"]},
+        {t:"互動的整體基調：",o:["與學生溝通時，常帶有負面語氣或使用諷刺挖苦的語言。","與學生互動時，語氣多為負面，可能帶有諷刺意味。","與學生互動時，語氣大多是負面的，但不會使用諷刺。","與學生互動時，語氣大多是正向的，不使用諷刺挖苦的語言。","與學生溝通時，語氣始終是正向的，絕不使用諷刺挖苦的語言。"]},
+        {t:"使用學生姓名：",o:["在交流中絕對不會使用學生姓名。","只有一兩個學生的名字會一直使用。","老師會使用少數學生的名字，但不一致。","與學生互動時，會使用一些學生的名字。","老師在與學生互動時，會記得並使用所有學生的名字。"]},
+        {t:"師生關係：",o:["學生顯然不尊重老師，或對老師感到不自在。","學生與老師之間缺乏連結（例如，他們對笑話不笑）。","部分學生可能不與老師互動，或顯得與老師關係疏遠。","有些學生會笑老師的笑話，或是與老師保持正向的關係，但並非所有學生都能做到。","絕大多數學生都會被老師的笑話逗笑，或是與老師保持著正向的關係。"]},
+        {t:"學生參與：",o:["學生不能自由參與課堂活動或討論。","很少學生能自由地參與課堂活動或討論。","多數學生都能自由地參與課堂活動或討論。","絕大多數學生都能自由地參與課堂活動或討論。"]},
+      ]},
+      { id:"CC_DB", name:"破壞性行為程度", en:"Level of Disruptive Behavior", qs:[
+        {t:"干擾行為次數：",o:["在 10 分鐘的觀察期內，課堂上的干擾度超過7次，或發生了 2 次或 2 次以上嚴重行為（例如，攻擊性行為、打架）。","在 10 分鐘的觀察期內，課堂上的干擾事件發生次數超過6 次，或發生了 1 起嚴重行為。","在 10 分鐘的觀察中，課堂上的干擾次數約 6 次，沒有發生嚴重行為。","課堂上的干擾程度很低，在 10 分鐘的觀察期間只發生了大約 5 次干擾，沒有發生任何嚴重行為。","課堂上的干擾程度極低，在 10 分鐘的觀察期間，干擾事件不到 5 起，沒有發生任何嚴重行為。"]},
+        {t:"擾亂課堂秩序的學生數：",o:["超過半數的學生有擾亂課堂秩序的行為。教室裡一片混亂。","約有50%的學生有擾亂課堂秩序的行為。","大約有3名學生擾亂課堂秩序。","造成這些擾亂秩序行為的主要責任人是一到兩名學生。","沒有哪個學生特別擾亂課堂秩序。"]},
+        {t:"學生之間的合作：",o:["學生之間缺乏合作精神（例如，爭搶學習用品，不分享）。","有些學生之間互相合作。","大多數學生彼此之間都能合作，但拒絕與某個小組或個別學生合作。","大多數學生都能互相合作。","所有學生都互相合作。"]},
+        {t:"教學中斷：",o:["許多行為極具破壞性，中斷教學超過 30 秒。","好幾個行為極具破壞性，中斷教學超過 30 秒。","少數幾個行為極具破壞性，中斷教學超過 30 秒。","干擾行為持續時間很短，打斷教學時間不超過幾秒鐘。"]},
+      ]},
+    ]
+  },
+];
+
+var BANDS = [
+  {min:0,max:1,color:"#F4CCCC",label:"優先改善"},
+  {min:1,max:2,color:"#FCE5CD",label:"需要關注"},
+  {min:2,max:3,color:"#FFF2CC",label:"考慮調整"},
+  {min:3,max:4,color:"#FFFDE7",label:"持續發展"},
+  {min:4,max:4.5,color:"#D9EAD3",label:"繼續維持"},
+  {min:4.5,max:5,color:"#B6D7A8",label:"明顯優勢"},
+];
+
+var TAB_LABELS = ["基本資料","教室結構","教學管理","行為管理","課堂氛圍","結果"];
+var TAB_COLORS = ["#34495e","#D6E4F0","#E2EFDA","#FCE4D6","#E4DFEC","#27ae60"];
+
+// ═══════════════════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════════════════
+var currentPage = 0;
+var answers = {};
+var notes = {};
+var submitStatus = 'idle';
+var totalQ = DOMAINS.reduce(function(s,d){return s+d.subs.reduce(function(ss,sub){return ss+sub.qs.length},0)},0);
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RENDERING
+// ═══════════════════════════════════════════════════════════════════════════
+function init() { renderTabs(); renderPages(); showPage(0); updateProgress(); }
+
+function renderTabs() {
+  document.getElementById('tabs').innerHTML = TAB_LABELS.map(function(l,i){
+    return '<div class="tab" id="tab'+i+'" onclick="tabClick('+i+')">'+l+'</div>';
+  }).join('');
+}
+
+function renderPages() {
+  var container = document.getElementById('pages');
+  var html = '';
+
+  // Page 0
+  html += '<div class="page" id="page0">';
+  html += '<p style="font-size:13px;color:#555;line-height:1.7;margin-bottom:20px">要完成回饋調查，您之前應該至少進行 30 分鐘的課堂觀察，並評估以下課堂管理領域：教室結構、教學管理、行為管理、課堂氛圍。</p>';
+  html += infoField('name','姓名',true);
+  html += infoField('school','服務學校',true);
+  html += infoField('position','職位',true);
+  html += infoField('grade','任教年級',true);
+  html += infoField('email','電子郵件（選填）',false,'email');
+  html += '<div class="btn-row"><div></div><button class="btn btn-dark" onclick="nextPage()">開始評估 →</button></div>';
+  html += '</div>';
+
+  // Pages 1-4
+  DOMAINS.forEach(function(d, di) {
+    var pi = di + 1;
+    html += '<div class="page" id="page'+pi+'">';
+    html += '<div class="domain-hdr" style="background:'+d.color+'"><h2>'+d.icon+' '+d.name+'（'+d.en+'）</h2></div>';
+    d.subs.forEach(function(sub, si) {
+      html += '<div class="sub-card"><h3>'+(si+1)+'. '+sub.name+'</h3><div class="en">'+sub.en+'</div>';
+      sub.qs.forEach(function(q, qi) {
+        var key = sub.id+'_'+qi;
+        html += '<div class="question" id="q_'+key+'"><div class="q-title" id="qt_'+key+'">'+q.t+'</div>';
+        q.o.forEach(function(opt, oi) {
+          html += '<label class="option" id="opt_'+key+'_'+oi+'" onclick="selectOpt(\''+key+'\','+oi+','+q.o.length+',\''+d.color+'\')"><input type="radio" name="'+key+'"><span>'+opt+'</span></label>';
+        });
+        html += '</div>';
+      });
+      html += '<div style="margin-top:8px"><label style="font-size:12px;color:#666;font-weight:600">筆記：</label>';
+      html += '<textarea class="notes-area" placeholder="選填" onchange="notes[\''+sub.id+'\']=this.value">'+(notes[sub.id]||'')+'</textarea></div></div>';
+    });
+    var isLast = di === 3;
+    html += '<div class="btn-row"><button class="btn btn-gray" onclick="prevPage()">← 上一頁</button>';
+    html += '<button class="btn '+(isLast?'btn-green':'btn-dark')+'" onclick="nextPage()">'+(isLast?'查看結果':'下一頁 →')+'</button></div></div>';
+  });
+
+  // Page 5
+  html += '<div class="page" id="page5"></div>';
+  container.innerHTML = html;
+}
+
+function infoField(key, label, req, type) {
+  type = type || 'text';
+  return '<div class="field"><label>'+label+' '+(req?'<span class="req">*</span>':'')+'</label><input type="'+type+'" id="info_'+key+'" oninput="this.classList.remove(\'err\');this.nextElementSibling.style.display=\'none\'"><div class="err-msg">此欄位為必填</div></div>';
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INTERACTION
+// ═══════════════════════════════════════════════════════════════════════════
+function selectOpt(key, oi, total, color) {
+  answers[key] = oi;
+  document.querySelectorAll('label[id^="opt_'+key+'_"]').forEach(function(el){ el.classList.remove('selected'); el.style.background=''; });
+  var sel = document.getElementById('opt_'+key+'_'+oi);
+  sel.classList.add('selected'); sel.style.background = color+'80';
+  sel.querySelector('input').checked = true;
+  document.getElementById('qt_'+key).classList.remove('missing');
+  updateProgress();
+}
+
+function updateProgress() {
+  document.getElementById('progressFill').style.width = (Object.keys(answers).length/totalQ*100)+'%';
+}
+
+function tabClick(i) { if (i < currentPage) showPage(i); }
+function nextPage() { if (validatePage()) showPage(currentPage + 1); }
+function prevPage() { showPage(currentPage - 1); }
+
+function validatePage() {
+  if (currentPage === 0) {
+    var ok = true;
+    ['name','school','position','grade'].forEach(function(k){
+      var el = document.getElementById('info_'+k);
+      if (!el.value.trim()) { el.classList.add('err'); el.nextElementSibling.style.display='block'; ok=false; }
+    });
+    return ok;
+  }
+  if (currentPage >= 1 && currentPage <= 4) {
+    var domain = DOMAINS[currentPage-1]; var first = null;
+    domain.subs.forEach(function(sub){ sub.qs.forEach(function(q,qi){
+      var key = sub.id+'_'+qi;
+      if (answers[key] === undefined) { document.getElementById('qt_'+key).classList.add('missing'); if (!first) first=key; }
+    }); });
+    if (first) { document.getElementById('q_'+first).scrollIntoView({behavior:'smooth',block:'center'}); return false; }
+    return true;
+  }
+  return true;
+}
+
+function showPage(n) {
+  currentPage = n;
+  document.querySelectorAll('.page').forEach(function(el){ el.classList.remove('active'); });
+  document.getElementById('page'+n).classList.add('active');
+  TAB_LABELS.forEach(function(_,i){
+    var tab = document.getElementById('tab'+i);
+    tab.className = 'tab'+(i===n?' active':'')+(i<n?' done':'');
+    tab.style.background = i===n ? TAB_COLORS[i] : (i<n?'#d5d5d5':'#e8e8e8');
+    tab.style.color = i===n ? (i===0||i===5?'#fff':'#2c3e50') : (i<n?'#555':'#999');
+  });
+  if (n === 5) renderResults();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SCORING
+// ═══════════════════════════════════════════════════════════════════════════
+function calcScore(idx, total) { return (idx/(total-1))*5; }
+
+function getSubScore(sub) {
+  var sum=0, count=0;
+  sub.qs.forEach(function(q,qi){
+    var key = sub.id+'_'+qi;
+    if (answers[key] !== undefined) { sum += calcScore(answers[key], q.o.length); count++; }
+  });
+  return count ? (sum/count) : null;
+}
+
+function getBandLabel(score) {
+  for (var i=0; i<BANDS.length; i++) { if (score < BANDS[i].max || (score===5 && BANDS[i].max===5)) return BANDS[i].label; }
+  return BANDS[BANDS.length-1].label;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RESULTS
+// ═══════════════════════════════════════════════════════════════════════════
+function renderResults() {
+  var el = document.getElementById('page5');
+  var html = '<div style="text-align:center;margin-bottom:28px"><h2 style="font-size:22px;font-weight:800;color:#2c3e50">CCU 課堂評估結果</h2><p style="color:#666;font-size:13px;margin-top:4px">18 個子項獨立評分（0–5）</p></div>';
+
+  DOMAINS.forEach(function(d){
+    html += '<div class="result-group" style="background:'+d.color+'60;border-color:'+d.color+'">';
+    html += '<h3>'+d.icon+' '+d.name+'（'+d.en+'）</h3>';
+    d.subs.forEach(function(sub){
+      var score = getSubScore(sub);
+      if (score !== null) {
+        var pct = (score/5)*100;
+        var label = getBandLabel(score);
+        html += '<div class="band-row"><div class="band-label"><span class="name">'+sub.name+'</span><span class="score">'+score.toFixed(2)+' — '+label+'</span></div>';
+        html += '<div class="band-track">';
+        BANDS.forEach(function(b){ html += '<div class="band-seg" style="width:'+((b.max-b.min)/5*100)+'%;background:'+b.color+'"></div>'; });
+        html += '<div class="band-marker" style="left:'+pct+'%"></div>';
+        html += '<div class="band-arrow" style="left:'+pct+'%">▼</div>';
+        html += '</div></div>';
+      }
+    });
+    html += '</div>';
+  });
+
+  // 提交區塊
+  var email = (document.getElementById('info_email')||{}).value || '';
+  html += '<div class="submit-box" id="submitBox">';
+  html += '<div id="submitContent">';
+  html += '<div style="font-size:14px;font-weight:600;margin-bottom:8px;color:#2c3e50">確認無誤後，請點擊提交：</div>';
+  html += '<div style="font-size:12px;color:#888;margin-bottom:12px">提交後資料將儲存至系統'+(email?'，並將評估結果寄送至您的信箱（'+email+'）':'')+'。</div>';
+  html += '<div id="submitError"></div>';
+  html += '<div class="btn-row">';
+  html += '<button class="btn btn-gray" onclick="showPage(4)">← 返回修改</button>';
+  html += '<button class="btn btn-green" id="submitBtn" onclick="submitData()">📤 提交評估結果</button>';
+  html += '</div></div></div>';
+
+  el.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SUBMIT TO GAS
+// ═══════════════════════════════════════════════════════════════════════════
+function submitData() {
+  var btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = '提交中...';
+  document.getElementById('submitError').innerHTML = '';
+
+  var info = {
+    name: (document.getElementById('info_name')||{}).value || '',
+    school: (document.getElementById('info_school')||{}).value || '',
+    position: (document.getElementById('info_position')||{}).value || '',
+    grade: (document.getElementById('info_grade')||{}).value || '',
+    email: (document.getElementById('info_email')||{}).value || '',
+  };
+
+  var payload = JSON.stringify({ info: info, answers: answers, notes: notes });
+
+  fetch(GAS_URL, { method: 'POST', body: payload })
+    .then(function(res){ return res.json(); })
+    .then(function(result){
+      if (result.success) {
+        var box = document.getElementById('submitBox');
+        box.className = 'submit-box success';
+        box.innerHTML = '<div style="text-align:center"><div style="font-size:28px;margin-bottom:8px">✅</div><div style="font-size:15px;font-weight:700;color:#27ae60;margin-bottom:4px">提交成功！</div><div style="font-size:13px;color:#555">資料已儲存'+(info.email?'，評估結果已寄送至 '+info.email:'')+'。</div></div>';
+      } else {
+        document.getElementById('submitError').innerHTML = '<div class="submit-error">'+(result.error||'提交失敗，請稍後再試。')+'</div>';
+        btn.disabled = false; btn.textContent = '📤 提交評估結果';
+      }
+    })
+    .catch(function(err){
+      document.getElementById('submitError').innerHTML = '<div class="submit-error">網路連線錯誤，請檢查網路後再試。</div>';
+      btn.disabled = false; btn.textContent = '📤 提交評估結果';
+    });
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
