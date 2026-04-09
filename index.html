@@ -412,6 +412,17 @@ function getBandLabel(score) {
   return BANDS[BANDS.length-1].label;
 }
 
+function scoreToPct(score) {
+  var segWidth = 100 / 6;
+  for (var i=0; i<BANDS.length; i++) {
+    if (score < BANDS[i].max || (score===5 && i===BANDS.length-1)) {
+      var ratio = (score - BANDS[i].min) / (BANDS[i].max - BANDS[i].min);
+      return Math.max(2, Math.min(98, i * segWidth + ratio * segWidth));
+    }
+  }
+  return 98;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // RESULTS
 // ═══════════════════════════════════════════════════════════════════════════
@@ -425,11 +436,11 @@ function renderResults() {
     d.subs.forEach(function(sub){
       var score = getSubScore(sub);
       if (score !== null) {
-        var pct = (score/5)*100;
+        var pct = scoreToPct(score);
         var label = getBandLabel(score);
         html += '<div class="band-row"><div class="band-label"><span class="name">'+sub.name+'</span><span class="score">'+score.toFixed(2)+' — '+label+'</span></div>';
         html += '<div class="band-track">';
-        BANDS.forEach(function(b){ html += '<div class="band-seg" style="width:'+((b.max-b.min)/5*100)+'%;background:'+b.color+'"></div>'; });
+        BANDS.forEach(function(b){ html += '<div class="band-seg" style="width:16.67%;background:'+b.color+'"></div>'; });
         html += '<div class="band-marker" style="left:'+pct+'%"></div>';
         html += '<div class="band-arrow" style="left:'+pct+'%">▼</div>';
         html += '</div></div>';
