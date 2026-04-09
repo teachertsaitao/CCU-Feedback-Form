@@ -469,7 +469,24 @@ function submitData() {
     email: (document.getElementById('info_email')||{}).value || '',
   };
 
-  var payload = JSON.stringify({ info: info, answers: answers, notes: notes });
+  // 建立每題選擇明細
+  var details = [];
+  DOMAINS.forEach(function(d){
+    d.subs.forEach(function(sub){
+      sub.qs.forEach(function(q, qi){
+        var key = sub.id + '_' + qi;
+        var idx = answers[key];
+        details.push({
+          domain: d.name,
+          sub: sub.name,
+          question: q.t,
+          selected: (idx !== undefined && idx !== null) ? q.o[idx] : '未作答'
+        });
+      });
+    });
+  });
+
+  var payload = JSON.stringify({ info: info, answers: answers, notes: notes, details: details });
 
   fetch(GAS_URL, { method: 'POST', body: payload })
     .then(function(res){ return res.json(); })
