@@ -429,7 +429,7 @@ function renderResults() {
         var label = getBandLabel(score);
         html += '<div class="band-row"><div class="band-label"><span class="name">'+sub.name+'</span><span class="score">'+score.toFixed(2)+' — '+label+'</span></div>';
         html += '<div class="band-track">';
-        BANDS.forEach(function(b){ html += '<div class="band-seg" style="width:'+((b.max-b.min)/5*100)+'%;background:'+b.color+'"></div>'; });
+        BANDS.forEach(function(b){ html += '<div class="band-seg" style="width:16.67%;background:'+b.color+'"></div>'; });
         html += '<div class="band-marker" style="left:'+pct+'%"></div>';
         html += '<div class="band-arrow" style="left:'+pct+'%">▼</div>';
         html += '</div></div>';
