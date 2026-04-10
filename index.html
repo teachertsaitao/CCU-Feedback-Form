@@ -412,17 +412,6 @@ function getBandLabel(score) {
   return BANDS[BANDS.length-1].label;
 }
 
-function scoreToPct(score) {
-  var segWidth = 100 / 6;
-  for (var i=0; i<BANDS.length; i++) {
-    if (score < BANDS[i].max || (score===5 && i===BANDS.length-1)) {
-      var ratio = (score - BANDS[i].min) / (BANDS[i].max - BANDS[i].min);
-      return Math.max(2, Math.min(98, i * segWidth + ratio * segWidth));
-    }
-  }
-  return 98;
-}
-
 // ═══════════════════════════════════════════════════════════════════════════
 // RESULTS
 // ═══════════════════════════════════════════════════════════════════════════
@@ -436,11 +425,11 @@ function renderResults() {
     d.subs.forEach(function(sub){
       var score = getSubScore(sub);
       if (score !== null) {
-        var pct = scoreToPct(score);
+        var pct = Math.max(2, Math.min(98, (score/5)*100));
         var label = getBandLabel(score);
         html += '<div class="band-row"><div class="band-label"><span class="name">'+sub.name+'</span><span class="score">'+score.toFixed(2)+' — '+label+'</span></div>';
         html += '<div class="band-track">';
-        BANDS.forEach(function(b){ html += '<div class="band-seg" style="width:16.67%;background:'+b.color+'"></div>'; });
+        BANDS.forEach(function(b){ html += '<div class="band-seg" style="width:'+((b.max-b.min)/5*100)+'%;background:'+b.color+'"></div>'; });
         html += '<div class="band-marker" style="left:'+pct+'%"></div>';
         html += '<div class="band-arrow" style="left:'+pct+'%">▼</div>';
         html += '</div></div>';
@@ -448,6 +437,26 @@ function renderResults() {
     });
     html += '</div>';
   });
+
+  // 量尺說明
+  html += '<div style="margin-top:16px;padding:14px;background:#f8f8f8;border-radius:6px;font-size:12px;border:1px solid #e0e0e0">';
+  html += '<strong>量尺說明</strong><br><br>';
+  html += '<div style="display:flex;flex-wrap:wrap;gap:8px 24px">';
+  var legendItems = [
+    {color:'#F4CCCC',text:'0–1 分：優先改善'},
+    {color:'#FCE5CD',text:'1–2 分：需要關注'},
+    {color:'#FFF2CC',text:'2–3 分：考慮調整'},
+    {color:'#FFFDE7',text:'3–4 分：持續發展'},
+    {color:'#D9EAD3',text:'4–4.5 分：繼續維持'},
+    {color:'#B6D7A8',text:'4.5–5 分：明顯優勢'},
+  ];
+  legendItems.forEach(function(item){
+    html += '<div style="display:flex;align-items:center;gap:6px"><div style="width:14px;height:14px;border-radius:2px;background:'+item.color+';border:1px solid #ddd;flex-shrink:0"></div><span>'+item.text+'</span></div>';
+  });
+  html += '</div></div>';
+
+  // 注意用語
+  html += '<div style="margin-top:12px;font-size:12px;color:#999;line-height:1.7">此報告由 CCU 課堂評估系統自動產生。<br>如有疑問，請聯繫您的學校諮詢者。</div>';
 
   // 提交區塊
   var email = (document.getElementById('info_email')||{}).value || '';
