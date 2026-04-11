@@ -295,12 +295,12 @@ function renderPages() {
 
   // Page 0
   html += '<div class="page" id="page0">';
-  html += '<p style="font-size:13px;color:#555;line-height:1.7;margin-bottom:20px">要完成回饋調查，您之前應該至少進行 30 分鐘的課堂觀察，並評估以下課堂管理領域：教室結構、教學管理、行為管理、課堂氛圍。</p>';
+  html += '<p style="font-size:13px;color:#555;line-height:1.7;margin-bottom:20px">要完成回饋調查，您之前應該至少進行 30 分鐘的課堂觀察（10 分鐘課堂觀察 + 5 分鐘學習投入觀察），並評估以下課堂管理領域：教室結構、教學管理、行為管理、課堂氛圍。</p>';
   html += infoField('name','姓名',true);
   html += infoField('school','服務學校',true);
   html += infoField('position','職位',true);
   html += infoField('grade','任教年級',true);
-  html += infoField('email','電子郵件（選填）',false,'email');
+  html += infoField('email','電子郵件（寄送評估回饋結果使用）',true,'email');
   html += '<div class="btn-row"><div></div><button class="btn btn-dark" onclick="nextPage()">開始評估 →</button></div>';
   html += '</div>';
 
@@ -361,7 +361,7 @@ function prevPage() { showPage(currentPage - 1); }
 function validatePage() {
   if (currentPage === 0) {
     var ok = true;
-    ['name','school','position','grade'].forEach(function(k){
+    ['name','school','position','grade','email'].forEach(function(k){
       var el = document.getElementById('info_'+k);
       if (!el.value.trim()) { el.classList.add('err'); el.nextElementSibling.style.display='block'; ok=false; }
     });
