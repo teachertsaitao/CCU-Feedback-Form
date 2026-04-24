@@ -109,6 +109,7 @@ h1.main-title { font-size: 22px; font-weight: 800; text-align: center; letter-sp
 
 @media print { .btn-row, .tabs, .progress-track, .submit-box { display: none; } .page { display: block !important; } }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
 <div class="wrap" id="app">
@@ -417,7 +418,8 @@ function getBandLabel(score) {
 // ═══════════════════════════════════════════════════════════════════════════
 function renderResults() {
   var el = document.getElementById('page5');
-  var html = '<div style="text-align:center;margin-bottom:28px"><h2 style="font-size:22px;font-weight:800;color:#2c3e50">CCU 課堂評估結果</h2><p style="color:#666;font-size:13px;margin-top:4px">18 個子項獨立評分（0–5）</p></div>';
+  var html = '<div id="resultChart" style="background:#fff;padding:20px;border-radius:8px">';
+  html += '<div style="text-align:center;margin-bottom:28px"><h2 style="font-size:22px;font-weight:800;color:#2c3e50">CCU 課堂評估結果</h2><p style="color:#666;font-size:13px;margin-top:4px">18 個子項獨立評分（0–5）</p></div>';
 
   DOMAINS.forEach(function(d){
     html += '<div class="result-group" style="background:'+d.color+'60;border-color:'+d.color+'">';
@@ -457,6 +459,13 @@ function renderResults() {
 
   // 注意用語
   html += '<div style="margin-top:12px;font-size:12px;color:#999;line-height:1.7">此報告由 CCU 課堂評估系統自動產生。<br>如有疑問，請聯繫您的學校諮詢者。</div>';
+  html += '</div>'; // 關閉 resultChart
+
+  // 下載按鈕
+  html += '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">';
+  html += '<button class="btn" style="background:#2980b9" onclick="downloadChart()">📊 下載量尺評估圖</button>';
+  html += '<button class="btn" style="background:#8e44ad" onclick="downloadDetails()">📝 下載作答結果</button>';
+  html += '</div>';
 
   // 提交區塊
   var email = (document.getElementById('info_email')||{}).value || '';
@@ -524,6 +533,77 @@ function submitData() {
       document.getElementById('submitError').innerHTML = '<div class="submit-error">網路連線錯誤，請檢查網路後再試。</div>';
       btn.disabled = false; btn.textContent = '📤 提交評估結果';
     });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DOWNLOADS
+// ═══════════════════════════════════════════════════════════════════════════
+function downloadChart() {
+  var el = document.getElementById('resultChart');
+  html2canvas(el, { scale: 2, backgroundColor: '#ffffff' }).then(function(canvas) {
+    var teacherName = (document.getElementById('info_name')||{}).value || '評估';
+    var link = document.createElement('a');
+    link.download = 'CCU_量尺評估_' + teacherName + '.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  });
+}
+
+function downloadDetails() {
+  var teacherName = (document.getElementById('info_name')||{}).value || '教師';
+  var school = (document.getElementById('info_school')||{}).value || '';
+  var position = (document.getElementById('info_position')||{}).value || '';
+  var grade = (document.getElementById('info_grade')||{}).value || '';
+
+  var t = '';
+  t += 'CCU 課堂評估結果 — ' + teacherName + '\n';
+  t += '服務學校：' + school + '　職位：' + position + '　任教年級：' + grade + '\n';
+  t += '════════════════════════════════════════\n\n';
+
+  // 評分摘要
+  t += '【評分摘要】\n\n';
+  DOMAINS.forEach(function(d) {
+    t += '▍' + d.name + '\n';
+    d.subs.forEach(function(sub) {
+      var score = getSubScore(sub);
+      if (score !== null) {
+        t += '  ' + sub.name + '：' + score.toFixed(2) + ' / 5.00（' + getBandLabel(score) + '）\n';
+      }
+    });
+    t += '\n';
+  });
+
+  t += '量尺說明：\n';
+  t += '  0–1 分：優先改善 ｜ 1–2 分：需要關注 ｜ 2–3 分：考慮調整\n';
+  t += '  3–4 分：持續發展 ｜ 4–4.5 分：繼續維持 ｜ 4.5–5 分：明顯優勢\n';
+
+  // 填答明細
+  t += '\n\n════════════════════════════════════════\n';
+  t += '【填答明細】\n\n';
+  DOMAINS.forEach(function(d) {
+    t += '▍' + d.name + '\n';
+    d.subs.forEach(function(sub) {
+      t += '\n  ■ ' + sub.name + '\n';
+      sub.qs.forEach(function(q, qi) {
+        var key = sub.id + '_' + qi;
+        var idx = answers[key];
+        t += '    ' + q.t + '\n';
+        t += '    → ' + (idx !== undefined && idx !== null ? q.o[idx] : '未作答') + '\n';
+      });
+    });
+    t += '\n';
+  });
+
+  t += '════════════════════════════════════════\n';
+  t += '此報告由 CCU 課堂評估系統自動產生。\n';
+
+  // 下載
+  var blob = new Blob([t], { type: 'text/plain;charset=utf-8' });
+  var link = document.createElement('a');
+  link.download = 'CCU_填答明細_' + teacherName + '.txt';
+  link.href = URL.createObjectURL(blob);
+  link.click();
+  URL.revokeObjectURL(link.href);
 }
 
 document.addEventListener('DOMContentLoaded', init);
