@@ -616,5 +616,32 @@ function downloadDetails() {
 
 document.addEventListener('DOMContentLoaded', init);
 </script>
+<div id="sw-update-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;padding:12px 16px;background:#2c3e50;color:white;font-size:14px;font-family:'Noto Sans TC',-apple-system,sans-serif;text-align:center;box-shadow:0 -2px 12px rgba(0,0,0,0.2);">
+  <span>🔄 有新版本可用</span>
+  <button onclick="window.location.reload()" style="margin-left:12px;padding:6px 16px;background:white;color:#2c3e50;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">立即更新</button>
+  <button onclick="this.parentElement.style.display='none'" style="margin-left:8px;padding:6px 10px;background:transparent;color:rgba(255,255,255,0.5);border:none;font-size:13px;cursor:pointer;">稍後</button>
+</div>
+<script>
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js').then(function(reg){
+    setInterval(function(){ reg.update(); }, 30 * 60 * 1000);
+    reg.addEventListener('updatefound', function(){
+      var newSW = reg.installing;
+      if(newSW){
+        newSW.addEventListener('statechange', function(){
+          if(newSW.state === 'activated'){
+            document.getElementById('sw-update-banner').style.display = 'block';
+          }
+        });
+      }
+    });
+  }).catch(function(){});
+  navigator.serviceWorker.addEventListener('message', function(e){
+    if(e.data && e.data.type === 'SW_UPDATED'){
+      document.getElementById('sw-update-banner').style.display = 'block';
+    }
+  });
+}
+</script>
 </body>
 </html>
