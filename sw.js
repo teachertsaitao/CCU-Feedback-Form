@@ -1,4 +1,5 @@
-const CACHE_NAME = 'ccu-v1';
+// Build: 20260425165944
+const CACHE_NAME = 'ccu-20260425165944';
 const ASSETS = [
   './',
   './index.html',
