@@ -1,6 +1,6 @@
 {
   "name": "CCU 評估回饋調查",
-  "short_name": "CCU 評估",
+  "short_name": "CCU評估回饋",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#f5f6f8",
